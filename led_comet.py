@@ -139,6 +139,12 @@ def fade_grid(fading:int=5):
 			else:
 				grid[i][j] -= fading
 
+def print_grid(): # (for tests)
+	for i in range(size_y):
+		for j in range(size_x):
+			print(grid[i][j], end=' ')
+		print()
+	print()
 	
 if __name__ == '__main__':
 
