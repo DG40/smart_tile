@@ -43,6 +43,10 @@ for _ in range(size_y):
 	grid.append([0] * size_x)
 smooth = 15	# - coefficient for comet tail length
 
+colors = [] # based on grid
+for _ in range(size_y):
+	colors.append([0, 0, 0, 0] * size_x)
+
 # Reading data from joystick tile:
 def readData():
 	com.write(b"Z\n")
@@ -88,8 +92,26 @@ def fill_leds(r:int=10, g:int=10, b:int=10, w:int=10):
 			strip.setPixelColor(order[i][j], Color(r, g, b, w))
 
 
+def color_processing():
+	for i in range(size_y):
+		for j in range(size_x): 
+			if grid[i][j] < 20:
+				r, g, b, w = 0, 0, 10, 0
+			else:
+				r = 4 * (255 - grid[i][j]) * grid[i][j] // 255
+				g = 4 * (255 - grid[i][j]) * grid[i][j] // 255
+				b = grid[i][j] // 2
+				w = grid[i][j]
+			colors[i][j] = [r, g, b, w]
+
+
+def color_leds():
+	for i in range(size_y):
+		for j in range(size_x):
+			strip.setPixelColor(order[i][j], Color(*colors[i][j]))
+
+
 def refresh_grid(x: int, y: int, radius:int=3, raising:int=5, fading:int=5):
-	
 	for i in range(size_y):
 		for j in range(size_x):
 			if (i - x) ** 2 + (j - y) ** 2 <= radius ** 2: # Esli v radiuse
@@ -109,14 +131,13 @@ def refresh_grid(x: int, y: int, radius:int=3, raising:int=5, fading:int=5):
 			strip.setPixelColor(order[i][j], Color(grid[i][j], grid[i][j], 0, grid[i][j]))
 
 		
-def fade_comet(fading:int=5):
+def fade_grid(fading:int=5):
 	for i in range(size_y):
 		for j in range(size_x):
 			if grid[i][j] - fading < 0: 
 				grid[i][j] = 0
 			else:
 				grid[i][j] -= fading
-			strip.setPixelColor(order[i][j], Color(grid[i][j], grid[i][j], 0, grid[i][j]))
 
 	
 if __name__ == '__main__':
@@ -145,12 +166,15 @@ if __name__ == '__main__':
 	#############
 	### LOOP: ###
 	#############
-
+	
 	while True:
 		new_x, new_y = readData()
+		print(new_x, new_y)
 		if (new_x, new_y) == (0, 0):
-			for _ in range(smooth):
-				fade_comet(fading=2)
+			for _ in range(15):
+				fade_grid(fading=2)
+				color_processing()
+				color_leds()
 				strip.show()
 			new_x = size_x // 2
 			new_y = size_y // 2
@@ -158,20 +182,26 @@ if __name__ == '__main__':
 			k = (new_y - last_y) / (new_x - last_x)
 			b = last_y - last_x * k
 			for x in range(last_x, new_x + 1):
-				for _ in range(smooth):
+				for _ in range(15):
 					refresh_grid(x, round(k * x + b), raising=10, fading=1)
+					color_processing()
+					color_leds()
 					strip.show()
 		elif last_x > new_x:
 			k = (new_y - last_y) / (new_x - last_x)
 			b = last_y - last_x * k
 			for x in range(last_x, new_x + 1, -1):
 				
-				for _ in range(smooth):
+				for _ in range(15):
 					refresh_grid(x, round(k * x + b), raising=10, fading=1)
+					color_processing()
+					color_leds()
 					strip.show()
 		else:
-			for _ in range(smooth):
+			for _ in range(15):
 				refresh_grid(new_x, new_y, raising=10, fading=5)
+				color_processing()
+				color_leds()
 				strip.show()
 		
 		last_x, last_y = new_x, new_y
