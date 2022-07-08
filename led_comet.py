@@ -107,11 +107,11 @@ def color_processing():
 			if grid[i][j] < 20:
 				if background[i][j][2] < 10:
 					background[i][j][2] = 10
+					background[i][j][-1] = not background[i][j][-1]
 				elif background[i][j][2] > 20:
 					background[i][j][2] = 20
-				background[i][j][2] += choice([0, 0, 0, 0, 0, 0, 1]) * (2 * background[i][j][-1] - 1)
-				if background[i][j][2] < 10 or background[i][j][2] > 20:
 					background[i][j][-1] = not background[i][j][-1]
+				background[i][j][2] += choice([0, 0, 0, 0, 0, 0, 1]) * (2 * background[i][j][-1] - 1)
 				colors[i][j] = background[i][j][:4]
 			else:
 				r = 4 * (255 - grid[i][j]) * grid[i][j] // 255
