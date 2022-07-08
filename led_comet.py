@@ -2,6 +2,7 @@ import time
 import serial
 from random import seed
 from random import randint
+from random import choice
 from rpi_ws281x import *
 
 # LEDs order:
@@ -41,11 +42,19 @@ LED_STRIP      = ws.SK6812_STRIP_GRBW
 grid = []	# - for adding tail to comet
 for _ in range(size_y):
 	grid.append([0] * size_x)
+	
 smooth = 15	# - coefficient for comet tail length
 
-colors = [] # based on grid
-for _ in range(size_y):
-	colors.append([0, 0, 0, 0] * size_x)
+background = [] # based on grid
+for i in range(size_y):
+	background.append([])
+	for _ in range(size_x):
+	background[i].append([0, 0, 0, 0] * size_x)
+	
+colors = [] 
+for i in range(size_y):
+	colors.append([])
+	for _ in range(size_x):
 
 # Reading data from joystick tile:
 def readData():
@@ -96,13 +105,20 @@ def color_processing():
 	for i in range(size_y):
 		for j in range(size_x): 
 			if grid[i][j] < 20:
-				r, g, b, w = 0, 0, 10, 0
+				if background[i][j][2] < 10:
+					background[i][j][2] = 10
+				elif background[i][j][2] > 20:
+					background[i][j][2] = 20
+				background[i][j][2] += choice([0, 0, 0, 0, 0, 0, 1]) * (2 * background[i][j][-1] - 1)
+				if background[i][j][2] < 10 or background[i][j][2] > 20:
+					background[i][j][-1] = not background[i][j][-1]
+				colors[i][j] = background[i][j][:4]
 			else:
 				r = 4 * (255 - grid[i][j]) * grid[i][j] // 255
 				g = 4 * (255 - grid[i][j]) * grid[i][j] // 255
 				b = grid[i][j] // 2
 				w = grid[i][j]
-			colors[i][j] = [r, g, b, w]
+				colors[i][j] = [r, g, b, w]
 
 
 def color_leds():
@@ -139,12 +155,6 @@ def fade_grid(fading:int=5):
 			else:
 				grid[i][j] -= fading
 
-def print_grid(): # (for tests)
-	for i in range(size_y):
-		for j in range(size_x):
-			print(grid[i][j], end=' ')
-		print()
-	print()
 	
 if __name__ == '__main__':
 
